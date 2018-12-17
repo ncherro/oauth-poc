@@ -20,18 +20,14 @@ Authenticating with Namely via OAuth
 1. run `docker-compose up app` to spin the web server up on port 8080 of your
    docker host
 
-Now visit:
+Now visit http://dockerhost:8080. Entering a subodomain in the form will
+effectively redirect you to this URL to kick off the OAuth handshake:
 
 `https://<SUBDOMAIN>.namely.com/api/v1/oauth2/authorize?response_type=code&client_id=<OAUTH_CLIENT_ID>&redirect_uri=<REDIRECT_URI>&state=<SUBDOMAIN>`
 
-> Replace `<SUBDOMAIN>` with any subdomain to which you'd like to authenticate,
-`<REDIRECT_URI>` with the value you set when creating the OAuth Client (see
-above), and `<OAUTH_CLIENT_ID>` with the value returned when you created your
-OAuth client.
-
 That's it! Once logged in, you will be redirected to http://dockerhost:8080/me,
-which displays your user's information for the current subdomain. Visit
-http://dockerhost:8080/company to get company information.
+which displays your user's information for the Namely subdomain you entered.
+Visit http://dockerhost:8080/company to get company information.
 
 ## To do
 

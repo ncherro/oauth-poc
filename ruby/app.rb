@@ -16,6 +16,25 @@ set :bind, '0.0.0.0'
 enable :sessions
 set :logger, Logger.new(STDOUT)
 
+# routes to trigger the flow
+# we're clearing the session to explicitly 'log out'
+get '/' do
+  session.clear
+  erb :index
+end
+
+post '/' do
+  subdomain = params[:subdomain]
+  # kick off the handshake
+  url = "https://#{subdomain}.#{API_BASE}/oauth2/authorize?" \
+    'response_type=code&' \
+    "client_id=#{OAUTH_CLIENT_ID}&" \
+    "redirect_uri=http://dockerhost:#{PORT}/api/clients/redirect_success&" \
+    "state=#{subdomain}"
+  redirect url
+end
+
+# our OAuth handler - completes the handshake and redirects to /me on success
 get '/api/clients/redirect_success' do
   logger.info(params)
 
@@ -48,10 +67,12 @@ get '/api/clients/redirect_success' do
     session[:refresh_token] = resp_body['refresh_token']
     redirect '/me'
   else
+    # something went wrong - show the response
     json(resp_body)
   end
 end
 
+# authorized endpoints
 get '/me' do
   logger.info(session)
 
