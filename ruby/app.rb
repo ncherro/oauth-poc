@@ -16,6 +16,12 @@ set :bind, '0.0.0.0'
 enable :sessions
 set :logger, Logger.new(STDOUT)
 
+helpers do
+  def auth_check
+    redirect('/') unless session[:subdomain] && session[:access_token]
+  end
+end
+
 # routes to trigger the flow
 # we're clearing the session to explicitly 'log out'
 get '/' do
@@ -74,6 +80,8 @@ end
 
 # authorized endpoints
 get '/me' do
+  auth_check
+
   logger.info(session)
 
   # pull info from the subdomain to which the user authenticated using their
@@ -94,6 +102,8 @@ get '/me' do
 end
 
 get '/company' do
+  auth_check
+
   logger.info(session)
 
   # pull info from the subdomain to which the user authenticated using their
