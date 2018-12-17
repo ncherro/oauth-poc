@@ -1,6 +1,6 @@
 # Namely OAuth POC - Ruby
 
-This is a POC of authenticating with Namely via OAuth
+Authenticating with Namely via OAuth
 
 ## Requirements
 
