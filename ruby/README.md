@@ -32,6 +32,6 @@ Visit http://dockerhost:8080/company to get company information.
 ## To do
 
 - ~~Guard /me and /company with auth checks~~
-- Use flash messages
-- Demo refresh tokens
+- ~~Flash messages~~
+- ~~Refresh tokens~~
 - Write tests
