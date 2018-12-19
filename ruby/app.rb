@@ -100,15 +100,19 @@ helpers do
   end
 
   def set_session(resp_body, subdomain = nil)
+    logger.info('Old session')
+    logger.info(session)
+
     expires_at = Time.now + resp_body['expires_in'].to_i
     logger.info("Setting session - new token expires at #{expires_at}")
 
     session[:access_token] = resp_body['access_token']
     session[:access_token_expires_at] = expires_at
-
     session[:refresh_token] = resp_body['refresh_token']
-
     session[:subdomain] = subdomain if subdomain
+
+    logger.info('New session')
+    logger.info(session)
   end
 
   def clear_session
@@ -121,7 +125,7 @@ helpers do
     logger.info('Refreshing...')
 
     subdomain = session[:subdomain]
-    refresh_token = session[:refresh_token]
+    old_refresh_token = session[:refresh_token]
 
     # perform the exchange
     uri = URI.parse("https://#{subdomain}.#{API_BASE}/oauth2/token")
@@ -132,7 +136,7 @@ helpers do
       "client_id=#{OAUTH_CLIENT_ID}&" \
       "client_secret=#{OAUTH_CLIENT_SECRET}&" \
       "redirect_uri=http://dockerhost:#{PORT}/api/clients/redirect_success&" \
-      "refresh_token=#{refresh_token}"
+      "refresh_token=#{old_refresh_token}"
 
     resp = http.request(req)
     resp_body = JSON.parse(resp.body)
