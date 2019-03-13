@@ -25,6 +25,20 @@ register Sinatra::Flash
 # we're clearing the session to explicitly 'log out'
 get '/' do
   clear_session
+
+  subdomain = params[:subdomain]
+  if subdomain
+    # redirect the user to Namely's oauth2/authorize endpoint to kick off the
+    # handshake
+    url = "https://#{subdomain}.#{API_BASE}/oauth2/authorize?" \
+      'response_type=code&' \
+      "client_id=#{OAUTH_CLIENT_ID}&" \
+      "redirect_uri=http://dockerhost:#{PORT}/api/clients/redirect_success&" \
+      "state=#{subdomain}"
+
+    redirect url
+  end
+
   erb :index
 end
 

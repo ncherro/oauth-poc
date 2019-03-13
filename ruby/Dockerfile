@@ -5,7 +5,7 @@ RUN apt-get update && apt-get upgrade -y
 ENV APP_HOME /app
 RUN mkdir -p $APP_HOME
 WORKDIR $APP_HOME
-COPY ./Gemfile* .
+COPY ./Gemfile* ./
 
 RUN bundle install
 

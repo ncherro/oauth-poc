@@ -5,6 +5,6 @@
 authenticate and authorize this app. If you don't have a user account in
 [subdomain].namely.com, this won't work (obv)</p>
 <form method="post" action="/">
-  <input type="text" placeholder="subdomain" name="subdomain">
+  <input type="text" placeholder="subdomain" name="subdomain" value="<%= params[:subdomain] %>">
   <input type="submit">
 </form>
