@@ -1,12 +1,16 @@
 require 'sinatra'
 require 'sinatra/json'
 require 'sinatra/flash'
-require 'logger'
 
+require 'logger'
 require 'net/http'
+require 'date'
 require 'uri'
 
+HOST = ENV.fetch('HOST', 'localhost')
 PORT = ENV.fetch('PORT', 8080)
+NONCE_DELIMITER = '-_-'.freeze
+
 API_BASE = 'namely.com/api/v1'.freeze
 
 OAUTH_CLIENT_ID = ENV.fetch('OAUTH_CLIENT_ID')
@@ -27,33 +31,13 @@ get '/' do
   clear_session
 
   subdomain = params[:subdomain]
-  if subdomain
-    # redirect the user to Namely's oauth2/authorize endpoint to kick off the
-    # handshake
-    url = "https://#{subdomain}.#{API_BASE}/oauth2/authorize?" \
-      'response_type=code&' \
-      "client_id=#{OAUTH_CLIENT_ID}&" \
-      "redirect_uri=http://dockerhost:#{PORT}/api/clients/redirect_success&" \
-      "state=#{subdomain}"
-
-    redirect url
-  end
+  kick_off_oauth(subdomain) if subdomain
 
   erb :index
 end
 
 post '/' do
-  subdomain = params[:subdomain]
-
-  # redirect the user to Namely's oauth2/authorize endpoint to kick off the
-  # handshake
-  url = "https://#{subdomain}.#{API_BASE}/oauth2/authorize?" \
-    'response_type=code&' \
-    "client_id=#{OAUTH_CLIENT_ID}&" \
-    "redirect_uri=http://dockerhost:#{PORT}/api/clients/redirect_success&" \
-    "state=#{subdomain}"
-
-  redirect url
+  kick_off_oauth(params[:subdomain])
 end
 
 # our OAuth handler - completes the handshake and redirects to /me on success
@@ -62,8 +46,14 @@ get '/api/clients/redirect_success' do
 
   # the `state` value tells us which subdomain the user authenticated against
   # we store it in a session, along with tokens, below
-  subdomain = params[:state]
-  halt(400, 'the "state" parameter is required') unless subdomain
+  nonce = params[:state]
+  halt(400, 'the "state" parameter is required') unless nonce
+
+  # ensure the state returned matches the nonce we set earlier
+  halt(400, 'invalid "state" was supplied') unless nonce == session[:nonce]
+
+  # grab the subdomain
+  subdomain = nonce.split(NONCE_DELIMITER)[0]
 
   # we'll exchange the `code` value for access / refresh tokens below
   code = params[:code]
@@ -106,11 +96,30 @@ end
 
 # helpers
 helpers do
+  # 1. generate a nonce and store it in our session
+  # 2.  redirect the user to Namely's oauth2/authorize endpoint to kick off the
+  # OAuth handshake
+  def kick_off_oauth(subdomain)
+    nonce = "#{subdomain}#{NONCE_DELIMITER}#{DateTime.now.strftime('%Q')}"
+    session[:nonce] = nonce
+
+    url = "https://#{subdomain}.#{API_BASE}/oauth2/authorize?" \
+      'response_type=code&' \
+      "client_id=#{OAUTH_CLIENT_ID}&" \
+      "redirect_uri=http://#{HOST}:#{PORT}/api/clients/redirect_success?" \
+      "state=#{nonce}"
+
+    logger.info("Redirecting to #{url}")
+
+    redirect url
+  end
+
+  # confirm that we have a subdomain and access_token in our session
   def auth_check
-    unless session[:subdomain] && session[:access_token]
-      flash[:error] = 'Unauthenticated'
-      redirect('/')
-    end
+    return if session[:subdomain] && session[:access_token]
+
+    flash[:error] = 'Unauthenticated'
+    redirect('/')
   end
 
   def set_session(resp_body, subdomain = nil)
@@ -131,7 +140,7 @@ helpers do
 
   def clear_session
     session[:access_token] = session[:access_token_expires_at] =
-      session[:refresh_token] = session[:subdomain] = nil
+      session[:refresh_token] = session[:subdomain] = session[:nonce] = nil
   end
 
   # refresh our token
@@ -149,7 +158,7 @@ helpers do
     req.body = 'grant_type=refresh_token&' \
       "client_id=#{OAUTH_CLIENT_ID}&" \
       "client_secret=#{OAUTH_CLIENT_SECRET}&" \
-      "redirect_uri=http://dockerhost:#{PORT}/api/clients/redirect_success&" \
+      "redirect_uri=http://#{HOST}:#{PORT}/api/clients/redirect_success&" \
       "refresh_token=#{old_refresh_token}"
 
     resp = http.request(req)

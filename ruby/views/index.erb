@@ -1,10 +1,10 @@
 <p><%= styled_flash %></p>
 <h2>Hello!</h2>
 <p>Enter a subdomain to kick off the OAuth flow</p>
-<p><em>Note</em> you will be redirected to [subdomain].namely.com to
-authenticate and authorize this app. If you don't have a user account in
-[subdomain].namely.com, this won't work (obv)</p>
 <form method="post" action="/">
   <input type="text" placeholder="subdomain" name="subdomain" value="<%= params[:subdomain] %>">
   <input type="submit">
 </form>
+<p>You will be redirected to [subdomain].namely.com to authenticate and
+authorize this app. If you don't have a user account in [subdomain].namely.com,
+you will not be able to proceed.</p>
