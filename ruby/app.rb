@@ -77,7 +77,7 @@ get '/api/clients/redirect_success' do
     logger.info(resp_body)
     set_session(resp_body, subdomain)
 
-    redirect '/me'
+    redirect '/api/profiles/me'
   else
     # something went wrong - show the response
     status(resp.code)
@@ -85,13 +85,9 @@ get '/api/clients/redirect_success' do
   end
 end
 
-# authorized endpoints
-get '/me' do
-  api_request('/profiles/me')
-end
-
-get '/company' do
-  api_request('/companies/info')
+# wildcard access to the namely API - requires authorization
+get '/api/*' do
+  api_request('/' + params['splat'].join('/'))
 end
 
 # helpers
@@ -106,7 +102,7 @@ helpers do
     url = "https://#{subdomain}.#{API_BASE}/oauth2/authorize?" \
       'response_type=code&' \
       "client_id=#{OAUTH_CLIENT_ID}&" \
-      "redirect_uri=http://#{HOST}:#{PORT}/api/clients/redirect_success?" \
+      "redirect_uri=http://#{HOST}:#{PORT}/api/clients/redirect_success&" \
       "state=#{nonce}"
 
     logger.info("Redirecting to #{url}")
@@ -183,6 +179,7 @@ helpers do
       unless refresh_token
         redirect('/')
       end
+			expires_at = session[:access_token_expires_at]
     end
 
     logger.info("Token is fresh - expires in #{expires_at - Time.now} seconds")

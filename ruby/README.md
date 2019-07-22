@@ -1,6 +1,6 @@
-# Namely OAuth POC - Ruby
+# Namely OAuth POC - Ruby 
 
-Authenticating with Namely via OAuth
+Authenticating with Namely's API using OAuth
 
 ## Requirements
 
@@ -20,14 +20,19 @@ Authenticating with Namely via OAuth
 1. run `docker-compose up app` to spin the web server up on port 8080 of your
    docker host
 
-Now visit http://localhost:8080. Entering a subodomain and submitting the form
-will redirect you to this URL to kick off the OAuth handshake:
+Now visit http://localhost:8080, enter a subodomain in which you have a user
+account, and submit the form. You will be redirected to a URL that looks like
+this to kick off the OAuth handshake:
 
 `https://<SUBDOMAIN>.namely.com/api/v1/oauth2/authorize?response_type=code&client_id=<OAUTH_CLIENT_ID>&redirect_uri=<REDIRECT_URI>&state=<SUBDOMAIN|TIMESTAMP>`
 
-That's it! Once logged in, you will be redirected to http://localhost:8080/me,
-which displays your user's information for the Namely subdomain you entered.
-Visit http://localhost:8080/company to get company information.
+After authorizing, you will be redirected to
+http://localhost:8080/api/profiles/me, which displays your user's information
+for the Namely subdomain you entered.
+
+You should be able to access *any* API endpoint described in
+https://developers.namely.com by prefixing locally with `/api` - e.g. to hit
+`/companies/info`, visit http://localhost:8080/api/companies/info
 
 ## To do
 
